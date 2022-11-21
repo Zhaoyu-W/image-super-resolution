@@ -58,3 +58,17 @@ class AdobeTask:
 
     def upload_sr_image(self, **context):
         log.info("Start to upload adobe stock images...")
+        # TODO: send event to kafka
+        # BELOW IS SAMPLE EXAMPLE
+        data = {
+            "uuid": "1234",
+            "original_url": "original_test_url",
+            "trained_url": "trained_test_url",
+            "topic": "adobe"
+        }
+        headers = {"Content-Type": "application/json"}
+        requests.post(
+            "http://publisher:8000/producer",
+            headers=headers,
+            json=data,
+        )
