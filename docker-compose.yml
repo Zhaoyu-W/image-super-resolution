@@ -26,13 +26,19 @@ services:
       - EXECUTOR=Local
       - FERNET_KEY=S13e9NGOO9twOYbP_JIhNFn1YDLZ9m3ep8F7RlqNGbk=
       - AIRFLOW__WEBSERVER__WORKERS=8
-      - AIRFLOW__CORE__DAGS_FOLDER=/usr/local/airflow/isr/dags
+      - AIRFLOW__CORE__DAGS_FOLDER=/usr/local/airflow/pipeline/dags
       - ADOBE_API_KEY=${ADOBE_API_KEY}
       - ADOBE_PRODUCT=${ADOBE_PRODUCT}
       - ADOBE_CONTAINER_NAME=${ADOBE_CONTAINER_NAME}
+      - PEXELS_AUTH=${PEXELS_AUTH}
+      - PEXELS_CONTAINER_NAME=${PEXELS_CONTAINER_NAME}
+      - PIXABAY_KEY=${PIXABAY_KEY}
+      - PIXABAY_CONTAINER_NAME=${PIXABAY_CONTAINER_NAME}
       - AZURE_CONNECTION_STRING=${AZURE_CONNECTION_STRING}
+      - COSMOS_URI=${COSMOS_URI}
+      - COSMOS_KEY=${COSMOS_KEY}
     volumes:
-      - ./isr:/usr/local/airflow/isr
+      - ./pipeline:/usr/local/airflow/pipeline
       # Uncomment to include custom plugins
       # - ./plugins:/usr/local/airflow/plugins
     ports:
@@ -88,7 +94,7 @@ services:
       - kafka
       - zookeeper
     ports:
-      - 19000:9000
+      - 9000:9000
     environment:
       KAFKA_BROKERCONNECT: kafka:29092
 
@@ -98,6 +104,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - KAFKA_TOPIC_NAME=adobe,pixabay,pexels
+      - COSMOS_URI=${COSMOS_URI}
+      - COSMOS_KEY=${COSMOS_KEY}
     ports:
       - 8001:8001
     restart: "always"
@@ -107,6 +115,8 @@ services:
       - publisher
     networks:
       - broker-kafka
+    volumes:
+      - ./pipeline/utils/cosmos_factory.py:/consumer/app/cosmos_factory.py
 
   publisher:
     build:

@@ -6,15 +6,14 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 
 sys.path.append(os.getcwd())
-from isr.utils.constants import AIRFLOW_DEFAULT_ARGS
-from isr.tasks.adobe_tasks import AdobeTask
+from pipeline.utils.constants import AIRFLOW_DEFAULT_ARGS
+from pipeline.tasks.adobe_tasks import AdobeTask
 
 with DAG(
         dag_id="adobe_super_resolution",
         start_date=datetime.today().replace(minute=0),
         default_args=AIRFLOW_DEFAULT_ARGS,
-        # schedule_interval="*/1 * * * *",  # every minute
-        schedule_interval="@once"
+        schedule_interval="*/1 * * * *",  # every minute
 ) as adobe_train_dag:
     task = AdobeTask(date_time=datetime.today(), limit=50)
 

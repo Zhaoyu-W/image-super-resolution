@@ -5,7 +5,8 @@ from pydantic import BaseModel
 
 class Message(BaseModel):
     topic: str
-    uuid: str
+    id: str
     original_url: str
-    trained_url: str
+    title: str
+    # trained_url: str
 

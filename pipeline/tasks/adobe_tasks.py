@@ -5,16 +5,21 @@ import logging
 
 import requests
 
-from isr.utils.constants import ADOBE_URL, LIMIT
-from isr.utils.blob_file_uploader import AzureBlobFileUploader
+from pipeline.utils.constants import ADOBE_URL, LIMIT
+from pipeline.utils.blob_file_uploader import AzureBlobFileUploader
+from pipeline.utils.cosmos_factory import CosmosFactory
+from pipeline.utils.publish_util import publish_metadata
 
 log = logging.getLogger(__name__)
 
 
 class AdobeTask:
+    SQL = "SELECT * FROM adobe a where a.id IN {}"
+
     def __init__(self, date_time=datetime.today(), limit=LIMIT):
         self.date_time = date_time
         self.limit = limit
+        self.adobe_cosmos = CosmosFactory.get_container("adobe")
 
     def extract_source_image(self, **context):
         offset = self.date_time.hour*60 + self.date_time.minute
@@ -29,12 +34,22 @@ class AdobeTask:
 
         files = requests.post(
             ADOBE_URL.format(self.limit, offset), headers=headers).json().get("files", [])
+        file_ids = tuple([file.get("id") for file in files])
+        trained_imgs = self.adobe_cosmos.query_items(
+            self.SQL.format(str(file_ids)),
+            enable_cross_partition_query=True
+        )
+        trained_ids = [
+            img.get("id") for img in trained_imgs]
+        log.info("Filter trained ids: {}".format(trained_ids))
+
         file_metadata = [{
             "title": file.get("title"),
             "adobe_id": file.get("id"),
             "img_url": file.get("thumbnail_url"),
         }
             for file in files
+            if file.get("id") not in trained_ids
         ]
         azure_blob_file_uploader = AzureBlobFileUploader(
             "adobe", file_metadata=file_metadata, date_time=self.date_time)
@@ -44,9 +59,8 @@ class AdobeTask:
 
     def train_original_image(self, **context):
         log.info("Start to train adobe original images...")
-        file_metadata = context["task_instance"].xcom_pull(task_ids="adobe_extract_task")["file_metadata"]
-        print(json.loads(file_metadata))
-
+        file_metadata = json.loads(
+            context["task_instance"].xcom_pull(task_ids="adobe_extract_task")["file_metadata"])
         # TODO: fetch source image from blob, then train to sr image
         #try:
             # fd, path = tempfile.mkstemp()
@@ -55,20 +69,9 @@ class AdobeTask:
         # finally:
         #     os.remove(path)
 
+        return {"trained_metadata": json.dumps(file_metadata)}
 
     def upload_sr_image(self, **context):
         log.info("Start to upload adobe stock images...")
-        # TODO: send event to kafka
-        # BELOW IS SAMPLE EXAMPLE
-        data = {
-            "uuid": "1234",
-            "original_url": "original_test_url",
-            "trained_url": "trained_test_url",
-            "topic": "adobe"
-        }
-        headers = {"Content-Type": "application/json"}
-        requests.post(
-            "http://publisher:8000/producer",
-            headers=headers,
-            json=data,
-        )
+        publish_metadata(json.loads(context["task_instance"].xcom_pull(
+            task_ids="adobe_train_task")["trained_metadata"]), "adobe")
