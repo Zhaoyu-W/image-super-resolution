@@ -4,15 +4,9 @@ from app.core.gateways.kafka import Kafka
 from app.dependencies.kafka import get_kafka_instance
 from app.routers import publisher
 
-
-from dotenv import load_dotenv
-
 from fastapi import Depends, FastAPI, Request
 
-load_dotenv()
-
-
-app = FastAPI(title='Kafka Publisher API')
+app = FastAPI(title="Kafka Publisher API")
 kafka_server = Kafka(
     port="29092",
     servers="kafka",
@@ -38,14 +32,14 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 
-@app.get('/')
+@app.get("/")
 def get_root():
     return {"message': 'API is running..."}
 
 
 app.include_router(
     publisher.router,
-    prefix="/producer",
-    tags=["producer"],
+    prefix="/send",
+    tags=["send"],
     dependencies=[Depends(get_kafka_instance)],
 )

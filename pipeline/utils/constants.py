@@ -10,5 +10,5 @@ AIRFLOW_DEFAULT_ARGS = {
     "email_on_retry": False,
     "provide_context": True,
     "retries": 3,
-    "retry_delay": timedelta(minutes=5)
+    "retry_delay": timedelta(minutes=3)
 }

@@ -1,1 +1,2 @@
 kafka-python==2.0.2
+azure-cosmos==4.0.0

@@ -20,5 +20,5 @@ class Kafka:
         loop = asyncio.get_event_loop()
         return AIOKafkaProducer(
             loop=loop,
-            bootstrap_servers='{}:{}'.format(self._servers, self._port)
+            bootstrap_servers="{}:{}".format(self._servers, self._port)
         )

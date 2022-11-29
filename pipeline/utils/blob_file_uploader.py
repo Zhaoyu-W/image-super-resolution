@@ -6,8 +6,6 @@ from multiprocessing.pool import ThreadPool
 import requests
 from azure.storage.blob import BlobServiceClient, ContentSettings
 
-# from isr.utils.constants import AZURE_CONF
-
 log = logging.getLogger(__name__)
 
 

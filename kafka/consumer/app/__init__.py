@@ -1,11 +1,13 @@
-import logging
 import os
 from json import loads
 
 from kafka import KafkaConsumer
+from kafka.errors import NoBrokersAvailable
+from app.cosmos_factory import CosmosFactory
 
 
 def main():
+    print("Start Kafka Consumer...")
     try:
         # To consume latest messages and auto-commit offsets
         consumer = KafkaConsumer(
@@ -17,8 +19,10 @@ def main():
         consumer.subscribe(os.environ.get("KAFKA_TOPIC_NAME").split(","))
 
         for message in consumer:
-            print("%s:%d:%d: key=%s value=%s" % (message.topic, message.partition,
-                                                 message.offset, message.key, message.value))
+            print("%s:%d:%d: value=%s" % (message.topic, message.partition,
+                                          message.offset, message.value))
+            cosmos_container = CosmosFactory.get_container(message.topic)
+            cosmos_container.upsert_item(body=message.value)
 
-    except Exception as e:
-        logging.info("Connection successful", e)
+    except NoBrokersAvailable as e:
+        print("Unable to find a broker: {}".format(e))
