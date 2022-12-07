@@ -4,75 +4,98 @@ Image Super Resolution
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li><a href="#getting-started">Getting Started</a></li>
-    <li><a href="#prerequisites">Prerequisites</a></li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#other-commands">Other commands</a></li>
-    <li><a href="#connect-to-database">Connect to database</a></li>
-    <li><a href="#credits">Credits</a></li>
-
+    <li><a href="#about-the-project">About The Project</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#build">Build</a></li>
+        <li><a href="#usage">Usage</a></li>
+      </ul>
+    </li>
+    <li><a href="#running-other-airflow-commands">Running Other Airflow Commands</a></li>
   </ol>
 </details>
 
-## Getting Started
+## About The Project
+Image Super Resolution(ISR) is an ML pipeline that extracts the raw images from various open image stocks, 
+trains to super-resolution(sr) images, and loads them into cloud storage. We built ISR on top of Apache Airflow,
+Apache Kafka, Azure Blob and Cosmos, and SRCNN. In this dataflow, we periodically fetch the source images using 
+Open APIs provided by Adobe, Pexels, and Pixabay, model to SR images by PyTorch SRCNN, and upload raw and SR 
+images to Azure Blob and connect image metadata to Azure Cosmos DB.
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-
-- Clone this repo
-- Install the prerequisites
-- Run the service
-- Check http://localhost:8080
-- Done! :tada:
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## Architecture
+  <a href="https://github.com/Zhaoyu-W/image-super-resolution/docs/architecture.png">
+    <img src="docs/architecture.png" alt="architecture" height=10%>
+  </a>
+
+## Getting Started
 ### Prerequisites
 
 - Install [Docker](https://www.docker.com/)
 - Install [Docker Compose](https://docs.docker.com/compose/install/)
-- Following the Airflow release from [Python Package Index](https://pypi.python.org/pypi/apache-airflow)
+
+### Build
+```
+git clone https://github.com/Zhaoyu-W/image-super-resolution
+docker-compose build
+```
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Usage
 
-Run the web service with docker
-
+- Run the web service with docker
 ```
 docker-compose up -d
+```
+- Check out airflow UI website on http://localhost:8080/
+  <a href="https://github.com/Zhaoyu-W/image-super-resolution/docs/kafdrop.png">
+    <img src="docs/airflow.png" alt="airflow">
+  </a>
+- Trigger the DAGs
+- Check out kafdrop UI website on http://localhost:9000/
+  <a href="https://github.com/Zhaoyu-W/image-super-resolution/docs/kafdrop.png">
+    <img src="docs/kafdrop.png" alt="kafdrop">
+  </a>
 
-# Build the image
-# docker-compose up -d --build
+- Check out log output
+```
+docker-compose logs --tail 100
+```
+- If you see the logs from publisher and consumer, ISR is working well! 
+  <a href="https://github.com/Zhaoyu-W/image-super-resolution/docs/logs.png">
+    <img src="docs/logs.png" alt="logs" height=10%>
+  </a>
+- List containers
+```
+docker-compose ps
+```
+- Stop containers
+```
+docker-compose down
 ```
 
-Check http://localhost:8080/
-
-- `docker-compose logs` - Displays log output
-- `docker-compose ps` - List containers
-- `docker-compose down` - Stop containers
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Other commands
+## Monitoring
+We evaluate the performance and monitor metrics for Azure Blog and Cosmos DB. You can customize 
+metrics you want on Azure Dashboard, like latency, availability, bandwidth, etc.
+  <a href="https://github.com/Zhaoyu-W/image-super-resolution/docs/azure_monitoring.png">
+    <img src="docs/azure_monitoring.png" alt="azure_monitoring">
+  </a>
+
+## Running Other Airflow Commands
 
 If you want to run airflow sub-commands, you can do so like this:
 
-- `docker-compose run --rm webserver airflow list_dags` - List dags
-- `docker-compose run --rm webserver airflow test [DAG_ID] [TASK_ID] [EXECUTION_DATE]` - Test specific task
+- List dags: `docker-compose run --rm webserver airflow list_dags`
+- Test specific task: `docker-compose run --rm webserver airflow test [DAG_ID] [TASK_ID] [EXECUTION_DATE]`
 
 If you want to run/test python script, you can do so like this:
-- `docker-compose run --rm webserver python /usr/local/airflow/dags/[PYTHON-FILE].py` - Test python script
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- Test python script: `docker-compose run --rm webserver python /usr/local/airflow/pipeline/[PYTHON-FILE].py` 
 
-## Connect to database
-
-If you want to use Ad hoc query, make sure you've configured connections:
-go to Airflow UI Dashboard, click Admin -> Connections and Edit "postgres_default" set this values:
-- Host : postgres
-- Schema : airflow
-- Login : airflow
-- Password : airflow
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Credits
-
-- [Apache Airflow](https://github.com/apache/incubator-airflow)
-- [docker-airflow](https://github.com/puckel/docker-airflow/tree/1.10.0-5)
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
